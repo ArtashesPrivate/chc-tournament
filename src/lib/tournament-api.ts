@@ -10,10 +10,16 @@ export async function loadTournament():Promise<Tournament>{
  const client=supabase
  const {data:t,error}=await client.from('tournaments').select('*').eq('published',true).order('created_at',{ascending:false}).limit(1).maybeSingle()
  if(error||!t)return demoTournament
- const [{data:teams,error:teamsError},{data:matches,error:matchesError}]=await Promise.all([
-  client.from('teams').select('*').eq('tournament_id',t.id).order('name'),client.from('matches').select('*').eq('tournament_id',t.id).order('kickoff')])
+ const [{data:teams,error:teamsError},{data:matches,error:matchesError},{data:fields},{data:officials},{data:shifts},{data:sponsors}]=await Promise.all([
+  client.from('teams').select('*').eq('tournament_id',t.id).order('name'),client.from('matches').select('*').eq('tournament_id',t.id).order('kickoff'),
+  client.from('fields').select('*').eq('tournament_id',t.id).order('name'),client.from('officials').select('*').eq('tournament_id',t.id).order('name'),
+  client.from('volunteer_shifts').select('*').eq('tournament_id',t.id).order('starts_at'),client.from('sponsor_prospects').select('*').eq('tournament_id',t.id).order('score',{ascending:false})])
  if(teamsError||matchesError)throw teamsError??matchesError
- return {id:t.id,name:t.name,date:new Intl.DateTimeFormat('nl-NL',{dateStyle:'long'}).format(new Date(`${t.event_date}T12:00:00`)),venue:t.venue,published:t.published,fields:demoTournament.fields,officials:demoTournament.officials,volunteers:demoTournament.volunteers,sponsors:demoTournament.sponsors,
+ return {id:t.id,name:t.name,date:new Intl.DateTimeFormat('nl-NL',{dateStyle:'long'}).format(new Date(`${t.event_date}T12:00:00`)),venue:t.venue,published:t.published,
+  fields:(fields??demoTournament.fields??[]).map((x:any)=>({id:x.id,name:x.name,surface:x.surface,status:x.status})),
+  officials:(officials??demoTournament.officials??[]).map((x:any)=>({id:x.id,name:x.name,role:x.role,availability:x.availability,matches:(matches??[]).filter((m:any)=>m.referee_name===x.name).length})),
+  volunteers:(shifts??demoTournament.volunteers??[]).map((x:any)=>({id:x.id,name:x.volunteer_name??x.name,task:x.task,shift:x.starts_at?`${new Date(x.starts_at).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'})}–${new Date(x.ends_at).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'})}`:x.shift,status:x.status})),
+  sponsors:(sponsors??demoTournament.sponsors??[]).map((x:any)=>({id:x.id,name:x.company_name??x.name,contact:x.contact_name??x.contact,stage:x.stage,score:x.score,value:Number(x.potential_value??x.value),package:x.package_name??x.package,nextAction:x.next_action??x.nextAction})),
   teams:(teams as DbTeam[]).map(x=>({id:x.id,name:x.name,club:x.club_name,pool:x.pool_name,color:x.color??undefined})),
   matches:(matches as DbMatch[]).map(x=>({id:x.id,kickoff:x.kickoff.slice(0,5),field:x.field_name,homeTeamId:x.home_team_id,awayTeamId:x.away_team_id,homeScore:x.home_score,awayScore:x.away_score,status:x.status,pool:x.pool_name,referee:x.referee_name??undefined}))}
 }
@@ -27,6 +33,6 @@ export async function updateScore(matchId:string,homeScore:number,awayScore:numb
 export function subscribeToTournament(tournamentId:string,onChange:()=>void){
  if(!supabase)return()=>undefined
  const client=supabase
- const channel=client.channel(`tournament:${tournamentId}`).on('postgres_changes',{event:'*',schema:'public',table:'matches',filter:`tournament_id=eq.${tournamentId}`},onChange).subscribe()
+ const channel=client.channel(`tournament:${tournamentId}`).on('postgres_changes',{event:'*',schema:'public',table:'matches',filter:`tournament_id=eq.${tournamentId}`},onChange).on('postgres_changes',{event:'*',schema:'public',table:'volunteer_shifts',filter:`tournament_id=eq.${tournamentId}`},onChange).subscribe()
  return()=>{void client.removeChannel(channel)}
 }
