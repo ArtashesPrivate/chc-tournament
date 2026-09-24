@@ -41,6 +41,6 @@ export async function createTournamentRecord(table:'teams'|'officials'|'voluntee
 export function subscribeToTournament(tournamentId:string,onChange:()=>void){
  if(!supabase)return()=>undefined
  const client=supabase
- const channel=client.channel(`tournament:${tournamentId}`).on('postgres_changes',{event:'*',schema:'public',table:'matches',filter:`tournament_id=eq.${tournamentId}`},onChange).on('postgres_changes',{event:'*',schema:'public',table:'teams',filter:`tournament_id=eq.${tournamentId}`},onChange).on('postgres_changes',{event:'*',schema:'public',table:'volunteer_shifts',filter:`tournament_id=eq.${tournamentId}`},onChange).subscribe()
+ const channel=client.channel(`tournament:${tournamentId}`).on('postgres_changes',{event:'*',schema:'public',table:'matches',filter:`tournament_id=eq.${tournamentId}`},onChange).on('postgres_changes',{event:'*',schema:'public',table:'teams',filter:`tournament_id=eq.${tournamentId}`},onChange).on('postgres_changes',{event:'*',schema:'public',table:'fields',filter:`tournament_id=eq.${tournamentId}`},onChange).on('postgres_changes',{event:'*',schema:'public',table:'officials',filter:`tournament_id=eq.${tournamentId}`},onChange).on('postgres_changes',{event:'*',schema:'public',table:'volunteer_shifts',filter:`tournament_id=eq.${tournamentId}`},onChange).subscribe()
  return()=>{void client.removeChannel(channel)}
 }
