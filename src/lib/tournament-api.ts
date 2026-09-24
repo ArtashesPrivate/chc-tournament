@@ -2,13 +2,15 @@ import {demoTournament} from '../demo'
 import type {Match,Tournament} from '../types'
 import {hasSupabase,supabase} from './supabase'
 
-type DbTeam={id:string;name:string;club_name:string;pool_name:string;color:string|null}
+type DbTeam={id:string;name:string;club_name:string;pool_name:string;color:string|null;category?:string;source?:string}
 type DbMatch={id:string;kickoff:string;field_name:string;home_team_id:string;away_team_id:string;home_score:number|null;away_score:number|null;status:Match['status'];pool_name:string;referee_name:string|null}
 
-export async function loadTournament():Promise<Tournament>{
+export async function loadTournament(tournamentId?:string):Promise<Tournament>{
  if(!hasSupabase||!supabase)return demoTournament
  const client=supabase
- const {data:t,error}=await client.from('tournaments').select('*').eq('published',true).order('created_at',{ascending:false}).limit(1).maybeSingle()
+ let query=client.from('tournaments').select('*')
+ query=tournamentId?query.eq('id',tournamentId):query.eq('published',true).order('created_at',{ascending:false}).limit(1)
+ const {data:t,error}=await query.maybeSingle()
  if(error||!t)return demoTournament
  const [{data:teams,error:teamsError},{data:matches,error:matchesError},{data:fields},{data:officials},{data:shifts},{data:sponsors}]=await Promise.all([
   client.from('teams').select('*').eq('tournament_id',t.id).order('name'),client.from('matches').select('*').eq('tournament_id',t.id).order('kickoff'),
@@ -20,7 +22,7 @@ export async function loadTournament():Promise<Tournament>{
   officials:(officials??demoTournament.officials??[]).map((x:any)=>({id:x.id,name:x.name,role:x.role,availability:x.availability,matches:(matches??[]).filter((m:any)=>m.referee_name===x.name).length})),
   volunteers:(shifts??demoTournament.volunteers??[]).map((x:any)=>({id:x.id,name:x.volunteer_name??x.name,task:x.task,shift:x.starts_at?`${new Date(x.starts_at).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'})}–${new Date(x.ends_at).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'})}`:x.shift,status:x.status})),
   sponsors:(sponsors??demoTournament.sponsors??[]).map((x:any)=>({id:x.id,name:x.company_name??x.name,contact:x.contact_name??x.contact,stage:x.stage,score:x.score,value:Number(x.potential_value??x.value),package:x.package_name??x.package,nextAction:x.next_action??x.nextAction})),
-  teams:(teams as DbTeam[]).map(x=>({id:x.id,name:x.name,club:x.club_name,pool:x.pool_name,color:x.color??undefined})),
+  teams:(teams as DbTeam[]).map(x=>({id:x.id,name:x.name,club:x.club_name,pool:x.pool_name,color:x.color??undefined,category:x.category})),
   matches:(matches as DbMatch[]).map(x=>({id:x.id,kickoff:x.kickoff.slice(0,5),field:x.field_name,homeTeamId:x.home_team_id,awayTeamId:x.away_team_id,homeScore:x.home_score,awayScore:x.away_score,status:x.status,pool:x.pool_name,referee:x.referee_name??undefined}))}
 }
 
