@@ -2,7 +2,7 @@ import {demoTournament} from '../demo'
 import type {Match,Tournament} from '../types'
 import {hasSupabase,supabase} from './supabase'
 
-type DbTeam={id:string;name:string;club_name:string;pool_name:string;color:string|null;category?:string;source?:string}
+type DbTeam={id:string;name:string;club_name:string;pool_name:string;color:string|null;category?:string;source?:string;changing_room?:string|null}
 type DbMatch={id:string;kickoff:string;field_name:string;home_team_id:string;away_team_id:string;home_score:number|null;away_score:number|null;status:Match['status'];pool_name:string;referee_name:string|null}
 
 export async function loadTournament(tournamentId?:string):Promise<Tournament>{
@@ -22,7 +22,7 @@ export async function loadTournament(tournamentId?:string):Promise<Tournament>{
   officials:(officials??demoTournament.officials??[]).map((x:any)=>({id:x.id,name:x.name,role:x.role,availability:x.availability,matches:(matches??[]).filter((m:any)=>m.referee_name===x.name).length})),
   volunteers:(shifts??demoTournament.volunteers??[]).map((x:any)=>({id:x.id,name:x.volunteer_name??x.name,task:x.task,shift:x.starts_at?`${new Date(x.starts_at).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'})}–${new Date(x.ends_at).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'})}`:x.shift,status:x.status})),
   sponsors:(sponsors??demoTournament.sponsors??[]).map((x:any)=>({id:x.id,name:x.company_name??x.name,contact:x.contact_name??x.contact,stage:x.stage,score:x.score,value:Number(x.potential_value??x.value),package:x.package_name??x.package,nextAction:x.next_action??x.nextAction})),
-  teams:(teams as DbTeam[]).map(x=>({id:x.id,name:x.name,club:x.club_name,pool:x.pool_name,color:x.color??undefined,category:x.category})),
+  teams:(teams as DbTeam[]).map(x=>({id:x.id,name:x.name,club:x.club_name,pool:x.pool_name,color:x.color??undefined,category:x.category,changingRoom:x.changing_room??undefined})),
   matches:(matches as DbMatch[]).map(x=>({id:x.id,kickoff:x.kickoff.slice(0,5),field:x.field_name,homeTeamId:x.home_team_id,awayTeamId:x.away_team_id,homeScore:x.home_score,awayScore:x.away_score,status:x.status,pool:x.pool_name,referee:x.referee_name??undefined}))}
 }
 
@@ -41,6 +41,6 @@ export async function createTournamentRecord(table:'teams'|'officials'|'voluntee
 export function subscribeToTournament(tournamentId:string,onChange:()=>void){
  if(!supabase)return()=>undefined
  const client=supabase
- const channel=client.channel(`tournament:${tournamentId}`).on('postgres_changes',{event:'*',schema:'public',table:'matches',filter:`tournament_id=eq.${tournamentId}`},onChange).on('postgres_changes',{event:'*',schema:'public',table:'volunteer_shifts',filter:`tournament_id=eq.${tournamentId}`},onChange).subscribe()
+ const channel=client.channel(`tournament:${tournamentId}`).on('postgres_changes',{event:'*',schema:'public',table:'matches',filter:`tournament_id=eq.${tournamentId}`},onChange).on('postgres_changes',{event:'*',schema:'public',table:'teams',filter:`tournament_id=eq.${tournamentId}`},onChange).on('postgres_changes',{event:'*',schema:'public',table:'volunteer_shifts',filter:`tournament_id=eq.${tournamentId}`},onChange).subscribe()
  return()=>{void client.removeChannel(channel)}
 }

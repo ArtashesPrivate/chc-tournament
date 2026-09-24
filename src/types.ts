@@ -1,4 +1,4 @@
-export type Team={id:string;name:string;club:string;pool:string;color?:string;category?:string;contact?:string;checkedIn?:boolean}
+export type Team={id:string;name:string;club:string;pool:string;color?:string;category?:string;contact?:string;checkedIn?:boolean;changingRoom?:string}
 export type MatchStatus='scheduled'|'live'|'finished'
 export type Match={id:string;kickoff:string;field:string;homeTeamId:string;awayTeamId:string;homeScore:number|null;awayScore:number|null;status:MatchStatus;pool:string;referee?:string;stage?:string;duration?:number;delay?:number}
 export type Standing={team:Team;played:number;won:number;drawn:number;lost:number;goalsFor:number;goalsAgainst:number;points:number}
