@@ -30,6 +30,12 @@ export async function updateScore(matchId:string,homeScore:number,awayScore:numb
  if(error)throw error
 }
 
+export async function createTournamentRecord(table:'teams'|'officials'|'volunteer_shifts'|'sponsor_prospects',values:Record<string,unknown>){
+ if(!supabase)throw new Error('Supabase is nog niet geconfigureerd.')
+ const {error}=await supabase.from(table).insert(values)
+ if(error)throw error
+}
+
 export function subscribeToTournament(tournamentId:string,onChange:()=>void){
  if(!supabase)return()=>undefined
  const client=supabase
