@@ -3,3 +3,11 @@ Thumbs.db
 .vercel
 node_modules
 *.log
+.npm-cache
+.gh-auth
+dist
+*.tsbuildinfo
+vite.config.js
+vite.config.d.ts
+.env
+.env.local
