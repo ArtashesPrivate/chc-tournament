@@ -13,7 +13,7 @@ export async function loadTournament():Promise<Tournament>{
  const [{data:teams,error:teamsError},{data:matches,error:matchesError}]=await Promise.all([
   client.from('teams').select('*').eq('tournament_id',t.id).order('name'),client.from('matches').select('*').eq('tournament_id',t.id).order('kickoff')])
  if(teamsError||matchesError)throw teamsError??matchesError
- return {id:t.id,name:t.name,date:new Intl.DateTimeFormat('nl-NL',{dateStyle:'long'}).format(new Date(`${t.event_date}T12:00:00`)),venue:t.venue,published:t.published,
+ return {id:t.id,name:t.name,date:new Intl.DateTimeFormat('nl-NL',{dateStyle:'long'}).format(new Date(`${t.event_date}T12:00:00`)),venue:t.venue,published:t.published,fields:demoTournament.fields,officials:demoTournament.officials,volunteers:demoTournament.volunteers,sponsors:demoTournament.sponsors,
   teams:(teams as DbTeam[]).map(x=>({id:x.id,name:x.name,club:x.club_name,pool:x.pool_name,color:x.color??undefined})),
   matches:(matches as DbMatch[]).map(x=>({id:x.id,kickoff:x.kickoff.slice(0,5),field:x.field_name,homeTeamId:x.home_team_id,awayTeamId:x.away_team_id,homeScore:x.home_score,awayScore:x.away_score,status:x.status,pool:x.pool_name,referee:x.referee_name??undefined}))}
 }

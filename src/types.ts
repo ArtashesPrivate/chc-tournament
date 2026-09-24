@@ -1,5 +1,9 @@
-export type Team={id:string;name:string;club:string;pool:string;color?:string}
+export type Team={id:string;name:string;club:string;pool:string;color?:string;category?:string;contact?:string;checkedIn?:boolean}
 export type MatchStatus='scheduled'|'live'|'finished'
-export type Match={id:string;kickoff:string;field:string;homeTeamId:string;awayTeamId:string;homeScore:number|null;awayScore:number|null;status:MatchStatus;pool:string;referee?:string}
+export type Match={id:string;kickoff:string;field:string;homeTeamId:string;awayTeamId:string;homeScore:number|null;awayScore:number|null;status:MatchStatus;pool:string;referee?:string;stage?:string;duration?:number;delay?:number}
 export type Standing={team:Team;played:number;won:number;drawn:number;lost:number;goalsFor:number;goalsAgainst:number;points:number}
-export type Tournament={id:string;name:string;date:string;venue:string;published:boolean;teams:Team[];matches:Match[]}
+export type Field={id:string;name:string;surface:string;status:'open'|'paused'|'closed'}
+export type Official={id:string;name:string;role:string;availability:string;matches:number}
+export type Volunteer={id:string;name:string;task:string;shift:string;status:'confirmed'|'invited'|'needed'}
+export type Sponsor={id:string;name:string;contact:string;stage:'Nieuw'|'Benaderen'|'Gesprek'|'Voorstel'|'Gewonnen';score:number;value:number;package:string;nextAction:string}
+export type Tournament={id:string;name:string;date:string;venue:string;published:boolean;teams:Team[];matches:Match[];fields?:Field[];officials?:Official[];volunteers?:Volunteer[];sponsors?:Sponsor[]}
